@@ -12,6 +12,7 @@ type JWT struct{}
 
 type jwtCustomClaims struct {
 	UserId string
+	Role   string
 	jwt.RegisteredClaims
 }
 
@@ -19,10 +20,11 @@ func NewJWT() *JWT {
 	return &JWT{}
 }
 
-func (j *JWT) GenerateToken(userId string) (tokenString string, err error) {
+func (j *JWT) GenerateToken(userId, role string) (tokenString string, err error) {
 
 	claims := &jwtCustomClaims{
 		UserId: userId,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 8)),
 		},
@@ -34,11 +36,12 @@ func (j *JWT) GenerateToken(userId string) (tokenString string, err error) {
 	return
 }
 
-func (j *JWT) GetUserIdFromToken(ctx echo.Context) (userId string, err error) {
+func (j *JWT) GetUserIdFromToken(ctx echo.Context) (userId, role string, err error) {
 
 	token := ctx.Get("user").(*jwtToken.Token)
 	claims := token.Claims.(jwtToken.MapClaims)
 	userId = claims["UserId"].(string)
+	role = claims["Role"].(string)
 
 	return
 }

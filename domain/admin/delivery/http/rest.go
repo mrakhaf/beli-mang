@@ -15,15 +15,15 @@ type handlerAdmin struct {
 	Json       common.JSON
 }
 
-func AdminHandler(authRoute *echo.Group, usecase interfaces.Usecase, repository interfaces.Repository, Json common.JSON) {
+func AdminHandler(publicRoute *echo.Group, usecase interfaces.Usecase, repository interfaces.Repository, Json common.JSON) {
 	handler := handlerAdmin{
 		usecase:    usecase,
 		repository: repository,
 		Json:       Json,
 	}
 
-	authRoute.POST("/user/it/register", handler.Register)
-	authRoute.POST("/user/it/login", handler.Login)
+	publicRoute.POST("/admin/register", handler.Register)
+	publicRoute.POST("/admin/login", handler.Login)
 }
 
 func (h *handlerAdmin) Register(c echo.Context) error {
@@ -38,7 +38,16 @@ func (h *handlerAdmin) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	return nil
+	data, err := h.usecase.Register(req)
+	if err != nil && (err.Error() == "user already exist" || err.Error() == "pq: duplicate key value violates unique constraint \"users_username_key\"") {
+		return c.JSON(http.StatusConflict, map[string]string{"error": err.Error()})
+
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return h.Json.FormatJson(c, http.StatusCreated, "Register success", data)
 }
 
 func (h *handlerAdmin) Login(c echo.Context) error {
