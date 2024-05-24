@@ -7,6 +7,7 @@ import (
 	"github.com/mrakhaf/halo-suster/models/entity"
 	"github.com/mrakhaf/halo-suster/models/request"
 	"github.com/mrakhaf/halo-suster/shared/common/jwt"
+	"github.com/mrakhaf/halo-suster/shared/utils"
 )
 
 type (
@@ -55,6 +56,30 @@ func (u *usecase) Register(req request.Register) (data interface{}, err error) {
 }
 
 func (u *usecase) Login(req request.Login) (data interface{}, err error) {
+
+	user, err := u.repository.GetUserByUsername(req.Username)
+	if err != nil {
+		return
+	}
+
+	if user.Role != "admin" {
+		err = fmt.Errorf("user not admin")
+		return
+	}
+
+	if err = utils.CheckPasswordHash(req.Password, user.Password); err != nil {
+		return
+	}
+
+	//generate token
+	token, err := u.JwtAccess.GenerateToken(user.Username, "admin")
+	if err != nil {
+		return
+	}
+
+	data = map[string]interface{}{
+		"token": token,
+	}
 
 	return
 }

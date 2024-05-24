@@ -26,7 +26,7 @@ func (r *repoHandler) GetUserByEmailAndRole(email string, role string) (user ent
 
 	row := r.databaseDB.QueryRow(query)
 
-	err = row.Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.Role, &user.CreatedAt)
+	err = row.Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.Role, &user.CreatedAt)
 
 	if err == sql.ErrNoRows {
 		err = nil
@@ -63,6 +63,17 @@ func (r *repoHandler) SaveUser(req request.Register) (user entity.User, err erro
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+func (r *repoHandler) GetUserByUsername(username string) (user entity.User, err error) {
+
+	query := fmt.Sprintf("SELECT * FROM users WHERE username = '%s'", username)
+
+	row := r.databaseDB.QueryRow(query)
+
+	err = row.Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.Role, &user.CreatedAt)
 
 	return
 }

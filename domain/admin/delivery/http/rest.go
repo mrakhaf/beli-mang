@@ -61,6 +61,11 @@ func (h *handlerAdmin) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	return h.Json.FormatJson(c, http.StatusOK, "Login success", nil)
+	data, err := h.usecase.Login(req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return h.Json.FormatJson(c, http.StatusOK, "Login success", data)
 
 }
