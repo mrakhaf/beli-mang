@@ -55,7 +55,7 @@ func (r *repoHandler) SaveUser(req request.Register) (user entity.User, err erro
 		Email:     req.Email,
 		Password:  password,
 		Role:      "admin",
-		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+		CreatedAt: time.Now().Format(time.RFC3339Nano),
 	}
 
 	query := fmt.Sprintf("INSERT INTO users (id, username, email, password, role, created_at) VALUES ('%s', '%s', '%s', '%s', '%s', '%s')", user.ID, user.Username, user.Email, user.Password, user.Role, user.CreatedAt)
