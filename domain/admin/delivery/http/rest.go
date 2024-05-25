@@ -32,6 +32,8 @@ func AdminHandler(publicRoute *echo.Group, restrictedRoute *echo.Group, usecase 
 	//merchant
 	restrictedRoute.POST("/admin/merchants", handler.CreateMerchant)
 	restrictedRoute.GET("/admin/merchants", handler.GetMerchants)
+	restrictedRoute.POST("/admin/merchants/:merchantId/items", handler.CreateItem)
+	restrictedRoute.GET("/admin/merchants/:merchantId/items", handler.GetItems)
 
 }
 
@@ -146,4 +148,84 @@ func (h *handlerAdmin) GetMerchants(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, data)
 
+}
+
+func (h *handlerAdmin) CreateItem(c echo.Context) error {
+
+	//check token
+	_, role, err := h.jwtAccess.GetUserIdFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not admin"})
+	}
+
+	//get param
+	merchantId := c.Param("merchantId")
+
+	var req request.CreateItem
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	isImage := utils.CheckImageType(req.ImageUrl)
+
+	if !isImage {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image not valid"})
+	}
+
+	data, err := h.usecase.CreateItem(req, merchantId)
+
+	if err != nil && err.Error() == "merchant not found" {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return h.Json.FormatJson(c, http.StatusCreated, "Create item success", data)
+}
+
+func (h *handlerAdmin) GetItems(c echo.Context) error {
+	//check token
+	_, role, err := h.jwtAccess.GetUserIdFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not admin"})
+	}
+
+	//get param
+	merchantId := c.Param("merchantId")
+
+	var req request.GetItems
+
+	//bind query param
+	if err := (&echo.DefaultBinder{}).BindQueryParams(c, &req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+	}
+
+	data, err := h.usecase.GetItems(req, merchantId)
+
+	if err != nil && err.Error() == "merchant not found" {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, data)
 }

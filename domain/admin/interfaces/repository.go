@@ -12,4 +12,7 @@ type Repository interface {
 	GetUserByUsername(username string) (user entity.User, err error)
 	SaveMerchant(req request.MerchantRequest) (merchant entity.Merchant, err error)
 	GetMerchants(req request.GetMerchants) (merchants []entity.Merchant, meta response.Meta, err error)
+	GetMerchantsById(merchantId string) (merchant entity.Merchant, err error)
+	SaveItem(req request.CreateItem, merchantId string) (item entity.Item, err error)
+	GetItems(req request.GetItems, merchantId string) (items []entity.Item, meta response.Meta, err error)
 }

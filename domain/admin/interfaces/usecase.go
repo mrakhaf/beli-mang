@@ -7,4 +7,6 @@ type Usecase interface {
 	Login(req request.Login) (data interface{}, err error)
 	CreateMerchant(req request.MerchantRequest) (data interface{}, err error)
 	GetMerchants(req request.GetMerchants) (data interface{}, err error)
+	CreateItem(req request.CreateItem, merchantId string) (data interface{}, err error)
+	GetItems(req request.GetItems, merchantId string) (data interface{}, err error)
 }

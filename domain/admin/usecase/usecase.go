@@ -139,3 +139,78 @@ func (u *usecase) GetMerchants(req request.GetMerchants) (data interface{}, err 
 
 	return
 }
+
+func (u *usecase) CreateItem(req request.CreateItem, merchantId string) (data interface{}, err error) {
+
+	merchant, err := u.repository.GetMerchantsById(merchantId)
+
+	if err != nil {
+		return
+	}
+
+	if merchant.ID == "" {
+		err = fmt.Errorf("merchant not found")
+		return
+	}
+
+	//save item
+	item, err := u.repository.SaveItem(req, merchantId)
+
+	if err != nil {
+		return
+	}
+
+	data = map[string]interface{}{
+		"itemId": item.ID,
+	}
+
+	return
+
+}
+
+func (u *usecase) GetItems(req request.GetItems, merchantId string) (data interface{}, err error) {
+
+	merchant, err := u.repository.GetMerchantsById(merchantId)
+
+	if err != nil {
+		return
+	}
+
+	if merchant.ID == "" {
+		err = fmt.Errorf("merchant not found")
+		return
+	}
+
+	items, meta, err := u.repository.GetItems(req, merchantId)
+
+	if err != nil {
+		return
+	}
+
+	var dataItem []response.Items
+
+	if len(items) > 0 {
+		dataItem = []response.Items{}
+
+		for _, item := range items {
+
+			dataItem = append(dataItem, response.Items{
+				ItemId:          item.ID,
+				Name:            item.Name,
+				Price:           item.Price,
+				ProductCategory: item.ProductCategory,
+				ImageUrl:        item.ImageUrl,
+				CreatedAt:       item.CreatedAt,
+			})
+		}
+	} else {
+		dataItem = []response.Items{}
+	}
+
+	data = map[string]interface{}{
+		"data": dataItem,
+		"meta": meta,
+	}
+
+	return
+}
