@@ -59,7 +59,7 @@ func main() {
 	//auth
 	adminRepo := adminRepository.NewRepository(database)
 	adminUsecase := adminUsecase.NewUsecase(adminRepo, jwtAccess)
-	adminHandler.AdminHandler(publicRoute, adminUsecase, adminRepo, formatResponse)
+	adminHandler.AdminHandler(publicRoute, restrictedGroup, adminUsecase, adminRepo, formatResponse, jwtAccess)
 
 	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", os.Getenv("APP_PORT"))))
 }

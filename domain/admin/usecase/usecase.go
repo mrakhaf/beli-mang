@@ -83,3 +83,19 @@ func (u *usecase) Login(req request.Login) (data interface{}, err error) {
 
 	return
 }
+
+func (u *usecase) CreateMerchant(req request.MerchantRequest) (data interface{}, err error) {
+
+	merchant, err := u.repository.SaveMerchant(req)
+
+	if err != nil {
+		return
+	}
+
+	data = map[string]interface{}{
+		"merchantId": merchant.ID,
+	}
+
+	return
+
+}

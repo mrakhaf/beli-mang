@@ -77,3 +77,26 @@ func (r *repoHandler) GetUserByUsername(username string) (user entity.User, err 
 
 	return
 }
+
+func (r *repoHandler) SaveMerchant(req request.MerchantRequest) (merchant entity.Merchant, err error) {
+
+	merchant = entity.Merchant{
+		ID:               utils.GenerateUUID(),
+		Name:             req.Name,
+		MerchantCategory: req.MerchantCategory,
+		ImageUrl:         req.ImageUrl,
+		Latitude:         req.Location.Lat,
+		Longitude:        req.Location.Long,
+		CreatedAt:        time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	query := fmt.Sprintf("INSERT INTO merchant (id, name, merchantcategory, imageurl, latitude, longitude, created_at) VALUES ('%s', '%s', '%s', '%s', '%f', '%f', '%s')", merchant.ID, merchant.Name, merchant.MerchantCategory, merchant.ImageUrl, merchant.Latitude, merchant.Longitude, merchant.CreatedAt)
+
+	_, err = r.databaseDB.Exec(query)
+	if err != nil {
+		return
+	}
+
+	return
+
+}

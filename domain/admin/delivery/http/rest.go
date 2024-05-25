@@ -7,23 +7,31 @@ import (
 	"github.com/mrakhaf/halo-suster/domain/admin/interfaces"
 	"github.com/mrakhaf/halo-suster/models/request"
 	"github.com/mrakhaf/halo-suster/shared/common"
+	"github.com/mrakhaf/halo-suster/shared/common/jwt"
+	"github.com/mrakhaf/halo-suster/shared/utils"
 )
 
 type handlerAdmin struct {
 	usecase    interfaces.Usecase
 	repository interfaces.Repository
 	Json       common.JSON
+	jwtAccess  *jwt.JWT
 }
 
-func AdminHandler(publicRoute *echo.Group, usecase interfaces.Usecase, repository interfaces.Repository, Json common.JSON) {
+func AdminHandler(publicRoute *echo.Group, restrictedRoute *echo.Group, usecase interfaces.Usecase, repository interfaces.Repository, Json common.JSON, JwtAccess *jwt.JWT) {
 	handler := handlerAdmin{
 		usecase:    usecase,
 		repository: repository,
 		Json:       Json,
+		jwtAccess:  JwtAccess,
 	}
 
 	publicRoute.POST("/admin/register", handler.Register)
 	publicRoute.POST("/admin/login", handler.Login)
+
+	//merchant
+	restrictedRoute.POST("/admin/merchants", handler.CreateMerchant)
+
 }
 
 func (h *handlerAdmin) Register(c echo.Context) error {
@@ -67,5 +75,48 @@ func (h *handlerAdmin) Login(c echo.Context) error {
 	}
 
 	return h.Json.FormatJson(c, http.StatusOK, "Login success", data)
+
+}
+
+func (h *handlerAdmin) CreateMerchant(c echo.Context) error {
+
+	var req request.MerchantRequest
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	isImage := utils.CheckImageType(req.ImageUrl)
+
+	if !isImage {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "image not valid"})
+	}
+
+	//check token
+	_, role, err := h.jwtAccess.GetUserIdFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not admin"})
+	}
+
+	//create merchant
+	data, err := h.usecase.CreateMerchant(req)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return h.Json.FormatJson(c, http.StatusCreated, "Create merchant success", data)
+}
+
+func (h *handlerAdmin) GetMerchants(c echo.Context) error {
+
+	return nil
 
 }
