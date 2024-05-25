@@ -8,6 +8,7 @@ import (
 	"github.com/mrakhaf/halo-suster/domain/admin/interfaces"
 	"github.com/mrakhaf/halo-suster/models/entity"
 	"github.com/mrakhaf/halo-suster/models/request"
+	"github.com/mrakhaf/halo-suster/models/response"
 	"github.com/mrakhaf/halo-suster/shared/utils"
 )
 
@@ -99,4 +100,75 @@ func (r *repoHandler) SaveMerchant(req request.MerchantRequest) (merchant entity
 
 	return
 
+}
+
+func (r *repoHandler) GetMerchants(req request.GetMerchants) (merchants []entity.Merchant, meta response.Meta, err error) {
+
+	query := "SELECT * FROM merchant WHERE 1 = 1"
+	queryTotal := "SELECT COUNT(*) FROM merchant WHERE 1 = 1"
+
+	if req.MerchantId != nil {
+		query += fmt.Sprintf(" AND id = '%s'", *req.MerchantId)
+		queryTotal += fmt.Sprintf(" AND id = '%s'", *req.MerchantId)
+	}
+
+	if req.Name != nil {
+		query += fmt.Sprintf(" AND name LIKE '%%%s%%'", *req.Name)
+		queryTotal += fmt.Sprintf(" AND name LIKE '%%%s%%'", *req.Name)
+	}
+
+	if req.MerchantCategory != nil {
+		query += fmt.Sprintf(" AND merchantcategory = '%s'", *req.MerchantCategory)
+		queryTotal += fmt.Sprintf(" AND merchantcategory = '%s'", *req.MerchantCategory)
+	}
+
+	if req.CreatedAt != nil {
+		if *req.CreatedAt == "asc" {
+			query += " ORDER BY created_at ASC"
+		} else if *req.CreatedAt == "desc" {
+			query += " ORDER BY created_at DESC"
+		}
+	}
+
+	if req.Limit != nil {
+		query += fmt.Sprintf(" LIMIT %d", *req.Limit)
+		meta.Limit = *req.Limit
+	} else {
+		query += fmt.Sprintf(" LIMIT 5")
+		meta.Limit = 5
+	}
+
+	if req.Offset != nil {
+		query += fmt.Sprintf(" OFFSET %d", *req.Offset)
+		meta.Offset = *req.Offset
+	} else {
+		query += fmt.Sprintf(" OFFSET 0")
+		meta.Offset = 0
+	}
+
+	//process query item
+	fmt.Println(query)
+	rows, err := r.databaseDB.Query(query)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var merchant entity.Merchant
+		err = rows.Scan(&merchant.ID, &merchant.Name, &merchant.MerchantCategory, &merchant.ImageUrl, &merchant.Latitude, &merchant.Longitude, &merchant.CreatedAt)
+		if err != nil {
+			return
+		}
+		merchants = append(merchants, merchant)
+	}
+
+	//process query total
+	rowTotal := r.databaseDB.QueryRow(queryTotal)
+	err = rowTotal.Scan(&meta.Total)
+	if err != nil {
+		return
+	}
+
+	return
 }

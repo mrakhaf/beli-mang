@@ -13,10 +13,10 @@ type MerchantRequest struct {
 }
 
 type GetMerchants struct {
-	MerchantId       *string `query:"merchantId"`
-	Limit            *int    `query:"limit"`
-	Offset           *int    `query:"offset"`
-	Name             *string `query:"name"`
-	MerchantCategory *string `query:"merchantCategory"`
-	CreatedAt        *string `query:"createdAt"`
+	MerchantId       *string `query:"merchantId" validate:"omitempty"`
+	Limit            *int    `query:"limit" validate:"omitempty"`
+	Offset           *int    `query:"offset" validate:"omitempty"`
+	Name             *string `query:"name" validate:"omitempty"`
+	MerchantCategory *string `query:"merchantCategory" validate:"omitempty"`
+	CreatedAt        *string `query:"createdAt" validate:"omitempty"`
 }

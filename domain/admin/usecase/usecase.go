@@ -6,6 +6,7 @@ import (
 	"github.com/mrakhaf/halo-suster/domain/admin/interfaces"
 	"github.com/mrakhaf/halo-suster/models/entity"
 	"github.com/mrakhaf/halo-suster/models/request"
+	"github.com/mrakhaf/halo-suster/models/response"
 	"github.com/mrakhaf/halo-suster/shared/common/jwt"
 	"github.com/mrakhaf/halo-suster/shared/utils"
 )
@@ -98,4 +99,43 @@ func (u *usecase) CreateMerchant(req request.MerchantRequest) (data interface{},
 
 	return
 
+}
+
+func (u *usecase) GetMerchants(req request.GetMerchants) (data interface{}, err error) {
+
+	merchants, meta, err := u.repository.GetMerchants(req)
+
+	if err != nil {
+		return
+	}
+
+	var dataMerchant []response.Merchants
+
+	if len(merchants) > 0 {
+		dataMerchant = []response.Merchants{}
+
+		for _, merchant := range merchants {
+
+			dataMerchant = append(dataMerchant, response.Merchants{
+				MerchantId:       merchant.ID,
+				Name:             merchant.Name,
+				MerchantCategory: merchant.MerchantCategory,
+				ImageUrl:         merchant.ImageUrl,
+				Location: response.Location{
+					Lat:  merchant.Latitude,
+					Long: merchant.Longitude,
+				},
+				CreatedAt: merchant.CreatedAt,
+			})
+		}
+	} else {
+		dataMerchant = []response.Merchants{}
+	}
+
+	data = map[string]interface{}{
+		"data": dataMerchant,
+		"meta": meta,
+	}
+
+	return
 }

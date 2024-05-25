@@ -31,6 +31,7 @@ func AdminHandler(publicRoute *echo.Group, restrictedRoute *echo.Group, usecase 
 
 	//merchant
 	restrictedRoute.POST("/admin/merchants", handler.CreateMerchant)
+	restrictedRoute.GET("/admin/merchants", handler.GetMerchants)
 
 }
 
@@ -117,6 +118,32 @@ func (h *handlerAdmin) CreateMerchant(c echo.Context) error {
 
 func (h *handlerAdmin) GetMerchants(c echo.Context) error {
 
-	return nil
+	//check token
+	_, role, err := h.jwtAccess.GetUserIdFromToken(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+	}
+	if role != "admin" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not admin"})
+	}
+
+	var req request.GetMerchants
+
+	//bind query param
+	if err := (&echo.DefaultBinder{}).BindQueryParams(c, &req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+	}
+
+	data, err := h.usecase.GetMerchants(req)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, data)
 
 }
